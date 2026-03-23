@@ -6,7 +6,7 @@ const createAddressSchema = (req, res, next) => {
     city: Joi.string().min(3).max(20).required(),
     pincode: Joi.number().integer().required(),
     state: Joi.string().min(3).max(20).required(),
-    type: Joi.string().valid("HOME", "OFFICE").optional(),
+    type: Joi.string().valid("HOME", "OFFICE"),
   });
 
   req.schema = schema;

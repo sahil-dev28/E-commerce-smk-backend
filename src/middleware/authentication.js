@@ -1,20 +1,25 @@
-const CustomError = require('../errors');
-const customUtils = require('../utils');
+const CustomError = require("../errors");
+const customUtils = require("../utils");
 
 const authenticateUserMiddleware = async (req, res, next) => {
-  const token = req.signedCookies[req.header('Origin')];
+  const token = req.signedCookies[req.header("Origin")];
 
   if (!token) {
-    throw new CustomError.UnauthenticatedError('Authentication invalid');
+    throw new CustomError.UnauthenticatedError("Authentication invalid");
   }
 
   try {
     const { userId, role } = customUtils.isTokenValid(token);
+    console.log({
+      userId,
+      role,
+    });
+
     const testUser = customUtils.checkTestUser(userId);
     req.user = { userId, role, testUser };
     return next();
   } catch (err) {
-    throw new CustomError.UnauthenticatedError('Authentication invalid');
+    throw new CustomError.UnauthenticatedError("Authentication invalid");
   }
 };
 
@@ -22,7 +27,7 @@ const authorizePermissionsMiddleware = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       throw new CustomError.UnauthorizedError(
-        'Unauthorized to access this route'
+        "Unauthorized to access this route"
       );
     }
     next();
@@ -30,7 +35,7 @@ const authorizePermissionsMiddleware = (...roles) => {
 };
 
 const attachUserIfExists = async (req, res, next) => {
-  const token = req.signedCookies[req.header('Origin')];
+  const token = req.signedCookies[req.header("Origin")];
 
   if (!token) {
     return next();

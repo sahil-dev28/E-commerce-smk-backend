@@ -1,4 +1,4 @@
-const { sendEmail } = require('./sendEmail');
+const { sendEmail } = require("./sendEmail");
 
 const sendResetPasswordEmail = async ({
   name,
@@ -14,7 +14,7 @@ const sendResetPasswordEmail = async ({
 
   return sendEmail({
     to: email,
-    subject: 'Shoe Craze Reset Password',
+    subject: "E-Commerce App Craze Reset Password",
     html,
   });
 };

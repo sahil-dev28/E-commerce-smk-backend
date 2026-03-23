@@ -1,10 +1,10 @@
-const { StatusCodes } = require('http-status-codes');
+const { StatusCodes } = require("http-status-codes");
 
-const prisma = require('../../prisma/prisma-client');
+const prisma = require("../../prisma/prisma-client");
 
-const CustomError = require('../errors');
-const retrieveSchema = require('../retrieveSchema');
-const modelMethods = require('../model-methods');
+const CustomError = require("../errors");
+const retrieveSchema = require("../retrieveSchema");
+const modelMethods = require("../model-methods");
 
 const createCoupon = async (req, res) => {
   await prisma.coupon.create({
@@ -27,7 +27,7 @@ const getAllCoupons = async (req, res) => {
       ...queryObject.where,
       code: {
         startsWith: search,
-        mode: 'insensitive',
+        mode: "insensitive",
       },
     };
   }
@@ -63,33 +63,33 @@ const getAllCoupons = async (req, res) => {
     };
   }
 
-  if (redemptionSort === 'highest') {
+  if (redemptionSort === "highest") {
     queryObject.orderBy.push({
-      totalRedemptions: 'desc',
+      totalRedemptions: "desc",
     });
   }
 
-  if (redemptionSort === 'lowest') {
+  if (redemptionSort === "lowest") {
     queryObject.orderBy.push({
-      totalRedemptions: 'asc',
+      totalRedemptions: "asc",
     });
   }
 
-  if (sort == 'latest') {
+  if (sort == "latest") {
     queryObject.orderBy.push({
-      createdAt: 'desc',
+      createdAt: "desc",
     });
   }
 
-  if (sort == 'oldest') {
+  if (sort == "oldest") {
     queryObject.orderBy.push({
-      createdAt: 'asc',
+      createdAt: "asc",
     });
   }
 
   if (!sort) {
     queryObject.orderBy.push({
-      createdAt: 'desc',
+      createdAt: "desc",
     });
   }
 
@@ -140,7 +140,7 @@ const updateCoupon = async (req, res) => {
 
   if (!coupon) {
     throw new CustomError.NotFoundError(
-      `No coupon found with id of ${couponId}`
+      `No coupon found with id of ${couponId}`,
     );
   }
 
@@ -170,9 +170,30 @@ const deleteCoupon = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
 
+const getAllValidCoupons = async (req, res) => {
+  const coupons = await prisma.coupon.findMany({
+    where: {
+      valid: true,
+      expiryTime: {
+        gte: new Date(),
+      },
+      totalRedemptions: { lt: prisma.coupon.fields.maxRedemptions },
+    },
+    orderBy: [
+      {
+        createdAt: "desc",
+      },
+    ],
+    select: retrieveSchema.coupon,
+  });
+
+  res.status(StatusCodes.OK).json({ coupons });
+};
+
 module.exports = {
   createCoupon,
   getAllCoupons,
   updateCoupon,
   deleteCoupon,
+  getAllValidCoupons,
 };

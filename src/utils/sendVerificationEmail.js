@@ -1,4 +1,4 @@
-const { sendEmail } = require('./sendEmail');
+const { sendEmail } = require("./sendEmail");
 
 const sendVerificationEmail = async ({
   name,
@@ -14,7 +14,7 @@ const sendVerificationEmail = async ({
 
   return sendEmail({
     to: email,
-    subject: 'Shoe Craze Email Confirmation',
+    subject: "E-Commerce App Email Confirmation",
     html,
   });
 };

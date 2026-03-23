@@ -1,10 +1,10 @@
-const { StatusCodes } = require('http-status-codes');
+const { StatusCodes } = require("http-status-codes");
 
-const prisma = require('../../prisma/prisma-client');
+const prisma = require("../../prisma/prisma-client");
 
-const CustomError = require('../errors');
-const customUtils = require('../utils');
-const modelMethods = require('../model-methods');
+const CustomError = require("../errors");
+const customUtils = require("../utils");
+const modelMethods = require("../model-methods");
 
 const register = async (req, res) => {
   delete req.body.role;
@@ -26,7 +26,7 @@ const register = async (req, res) => {
     name: user.firstName,
     email: user.email,
     verificationToken,
-    origin: req.header('Origin'),
+    origin: req.header("Origin"),
   });
 
   res.status(StatusCodes.CREATED).json({
@@ -35,7 +35,7 @@ const register = async (req, res) => {
 };
 
 const adminRegister = async (req, res) => {
-  req.body.role = 'ADMIN';
+  req.body.role = "ADMIN";
   const verificationToken = customUtils.createRandomBytes();
   console.log({ verificationToken });
 
@@ -54,7 +54,7 @@ const adminRegister = async (req, res) => {
     name: user.firstName,
     email: user.email,
     verificationToken,
-    origin: req.header('Origin'),
+    origin: req.header("Origin"),
   });
 
   res.status(StatusCodes.CREATED).json({
@@ -72,11 +72,11 @@ const verify = async (req, res) => {
   });
 
   if (!user) {
-    throw new CustomError.UnauthenticatedError('Verification failed');
+    throw new CustomError.UnauthenticatedError("Verification failed");
   }
 
   if (user.isVerified) {
-    throw new CustomError.BadRequestError('Already verified');
+    throw new CustomError.BadRequestError("Already verified");
   }
 
   new modelMethods.User(user).compareVerificationToken(
@@ -94,7 +94,7 @@ const verify = async (req, res) => {
     },
   });
 
-  res.status(StatusCodes.OK).json({ msg: 'Email verified successfully' });
+  res.status(StatusCodes.OK).json({ msg: "Email verified successfully" });
 };
 
 const forgotPassword = async (req, res) => {
@@ -134,7 +134,7 @@ const forgotPassword = async (req, res) => {
     name: user.firstName,
     email: user.email,
     passwordToken,
-    origin: req.header('Origin'),
+    origin: req.header("Origin"),
   });
 
   res
@@ -152,7 +152,7 @@ const resetPassword = async (req, res) => {
   });
 
   if (!user) {
-    throw new CustomError.UnauthenticatedError('Verification failed');
+    throw new CustomError.UnauthenticatedError("Verification failed");
   }
 
   const userModel = new modelMethods.User({
@@ -174,7 +174,7 @@ const resetPassword = async (req, res) => {
     },
   });
 
-  res.status(StatusCodes.OK).json({ msg: 'Password changed successfully' });
+  res.status(StatusCodes.OK).json({ msg: "Password changed successfully" });
 };
 
 const login = async (req, res) => {
@@ -239,16 +239,16 @@ const adminLogin = async (req, res) => {
 };
 
 const logout = (req, res) => {
-  res.cookie(req.header('Origin'), 'logout', {
+  res.cookie(req.header("Origin"), "logout", {
     httpOnly: true,
     maxAge: 0,
     secure: true,
     signed: true,
-    sameSite: 'none',
+    sameSite: "none",
   });
 
   res.status(StatusCodes.OK).json({
-    msg: 'Logged out successfully',
+    msg: "Logged out successfully",
   });
 };
 

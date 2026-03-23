@@ -1,13 +1,13 @@
-const { StatusCodes } = require('http-status-codes');
-const cloudinary = require('cloudinary').v2;
-const fs = require('fs').promises;
+const { StatusCodes } = require("http-status-codes");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs").promises;
 
-const prisma = require('../../prisma/prisma-client');
+const prisma = require("../../prisma/prisma-client");
 
-const CustomError = require('../errors');
-const customUtils = require('../utils');
-const modelMethods = require('../model-methods');
-const retrieveSchema = require('../retrieveSchema');
+const CustomError = require("../errors");
+const customUtils = require("../utils");
+const modelMethods = require("../model-methods");
+const retrieveSchema = require("../retrieveSchema");
 
 const showCurrentUser = async (req, res) => {
   const user = await prisma.user.findUnique({
@@ -22,27 +22,27 @@ const showCurrentUser = async (req, res) => {
 
 const uploadProfileImage = async (req, res) => {
   if (!req.files || !req.files.image) {
-    throw new CustomError.BadRequestError('No file uploaded');
+    throw new CustomError.BadRequestError("No file uploaded");
   }
 
   const profileImage = req.files.image;
 
   try {
-    if (!profileImage.mimetype.startsWith('image')) {
-      throw new CustomError.BadRequestError('Please upload an image');
+    if (!profileImage.mimetype.startsWith("image")) {
+      throw new CustomError.BadRequestError("Please upload an image");
     }
 
     const maxSize = 1024 * 1024;
 
     if (profileImage.size >= maxSize) {
       throw new CustomError.BadRequestError(
-        'Please upload an image smaller than 1 MB'
+        "Please upload an image smaller than 1 MB"
       );
     }
 
     const result = await cloudinary.uploader.upload(profileImage.tempFilePath, {
       use_filename: true,
-      folder: 'shoe-craze/profile-images',
+      folder: "e_commerce_app/profile-images",
     });
 
     await fs.unlink(profileImage.tempFilePath);
@@ -67,7 +67,7 @@ const uploadProfileImage = async (req, res) => {
     }
 
     res.status(StatusCodes.OK).json({
-      profileImage: { src: result.secure_url },
+      msg: "Profile image updated",
     });
   } catch (error) {
     await fs.unlink(profileImage.tempFilePath);
@@ -82,7 +82,7 @@ const removeProfileImage = async (req, res) => {
   } = req;
 
   if (!profileImageId) {
-    throw new CustomError.BadRequestError('Please provide profile image id');
+    throw new CustomError.BadRequestError("Please provide profile image id");
   }
 
   const user = await prisma.user.findUnique({
@@ -108,7 +108,7 @@ const removeProfileImage = async (req, res) => {
   await cloudinary.uploader.destroy(profileImageId);
 
   res.status(StatusCodes.OK).json({
-    msg: 'Profile image removed successfully',
+    msg: "Profile image removed successfully",
   });
 };
 
@@ -121,7 +121,7 @@ const updateUser = async (req, res) => {
   });
 
   res.status(StatusCodes.OK).json({
-    msg: 'Profile updated successfully',
+    msg: "Profile updated successfully",
   });
 };
 
@@ -148,16 +148,16 @@ const deleteUser = async (req, res) => {
     await cloudinary.uploader.destroy(user.profileImageId);
   }
 
-  res.cookie(req.header('Origin'), 'logout', {
+  res.cookie(req.header("Origin"), "logout", {
     httpOnly: true,
     maxAge: 0,
     secure: true,
     signed: true,
-    sameSite: 'none',
+    sameSite: "none",
   });
 
   res.status(StatusCodes.OK).json({
-    msg: 'Account deleted successfully',
+    msg: "Account deleted successfully",
   });
 };
 
@@ -168,7 +168,7 @@ const getAllUsers = async (req, res) => {
     where: {},
     orderBy: [
       {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     ],
   };
@@ -178,22 +178,22 @@ const getAllUsers = async (req, res) => {
       ...queryObject.where,
       email: {
         startsWith: search,
-        mode: 'insensitive',
+        mode: "insensitive",
       },
     };
   }
 
-  if (role === 'customer') {
+  if (role === "customer") {
     queryObject.where = {
       ...queryObject.where,
-      role: 'BASIC',
+      role: "BASIC",
     };
   }
 
-  if (role === 'admin') {
+  if (role === "admin") {
     queryObject.where = {
       ...queryObject.where,
-      role: 'ADMIN',
+      role: "ADMIN",
     };
   }
 
@@ -232,7 +232,7 @@ const updateUserStatus = async (req, res) => {
     throw new CustomError.NotFoundError(`No user found with id of ${userId}`);
   }
 
-  if (user.role !== 'ADMIN') {
+  if (user.role !== "ADMIN") {
     delete body.authorized;
   }
 
@@ -244,7 +244,7 @@ const updateUserStatus = async (req, res) => {
   });
 
   res.status(StatusCodes.OK).json({
-    msg: 'User status updated successfully',
+    msg: "User status updated successfully",
   });
 };
 
@@ -272,7 +272,7 @@ const removeUser = async (req, res) => {
   }
 
   res.status(StatusCodes.OK).json({
-    msg: 'User account deleted successfully',
+    msg: "User account deleted successfully",
   });
 };
 

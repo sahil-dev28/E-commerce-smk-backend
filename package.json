@@ -1,5 +1,5 @@
 {
-  "name": "shoe-craze-backend",
+  "name": "e_commerce_app_backend",
   "version": "1.0.0",
   "description": "e-commerce web application where user can shop for clothing.",
   "main": "src/app.js",

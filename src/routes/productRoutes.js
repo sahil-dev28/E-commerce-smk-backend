@@ -1,8 +1,9 @@
-const express = require('express');
+const express = require("express");
 
 const {
   createProduct,
   getAllProducts,
+  getWishListedProducts,
   updateProduct,
   getSingleProduct,
   deleteProduct,
@@ -10,12 +11,13 @@ const {
   removeProductFromWishList,
   addProductToCart,
   removeProductFromCart,
-} = require('../controllers/productController');
+  getCart,
+} = require("../controllers/productController");
 const {
   authenticateUserMiddleware,
   authorizePermissionsMiddleware,
   attachUserIfExists,
-} = require('../middleware/authentication');
+} = require("../middleware/authentication");
 const {
   createProductSchema,
   updateProductSchema,
@@ -24,94 +26,112 @@ const {
   removeProductFromWishListSchema,
   addProductToCartSchema,
   removeProductFromCartSchema,
-} = require('../validation/product');
-const { validateRequest } = require('../middleware/validate-request');
-const { testUserMiddleware } = require('../middleware/test-user');
+} = require("../validation/product");
+const { validateRequest } = require("../middleware/validate-request");
+const { testUserMiddleware } = require("../middleware/test-user");
 
 const router = express.Router();
 
 router
-  .route('/')
+  .route("/")
   .get(attachUserIfExists, getAllProducts)
   .post(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('ADMIN'),
+      authorizePermissionsMiddleware("ADMIN"),
       testUserMiddleware,
       createProductSchema,
       validateRequest,
     ],
-    createProduct
+    createProduct,
   );
 
 router
-  .route('/wishlist/:id')
+  .route("/wishlist")
+  .get(
+    authenticateUserMiddleware,
+    authorizePermissionsMiddleware("BASIC"),
+    testUserMiddleware,
+    getWishListedProducts,
+  );
+
+router
+  .route("/wishlist/:id")
   .post(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('BASIC'),
+      authorizePermissionsMiddleware("BASIC"),
       testUserMiddleware,
       addProductToWishListSchema,
       validateRequest,
     ],
-    addProductToWishList
+    addProductToWishList,
   )
   .delete(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('BASIC'),
+      authorizePermissionsMiddleware("BASIC"),
       testUserMiddleware,
       removeProductFromWishListSchema,
       validateRequest,
     ],
-    removeProductFromWishList
+    removeProductFromWishList,
   );
 
 router
-  .route('/cart/:id')
+  .route("/cart")
+  .get(
+    authenticateUserMiddleware,
+    authorizePermissionsMiddleware("BASIC"),
+    testUserMiddleware,
+    getCart,
+  );
+
+router
+  .route("/cart/:id")
   .post(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('BASIC'),
+      authorizePermissionsMiddleware("BASIC"),
       testUserMiddleware,
       addProductToCartSchema,
       validateRequest,
     ],
-    addProductToCart
+    addProductToCart,
   )
   .delete(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('BASIC'),
+      authorizePermissionsMiddleware("BASIC"),
       testUserMiddleware,
       removeProductFromCartSchema,
       validateRequest,
     ],
-    removeProductFromCart
+    removeProductFromCart,
   );
 
 router
-  .route('/:id')
+  .route("/:id")
   .get(attachUserIfExists, getSingleProduct)
   .patch(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('ADMIN'),
+      authorizePermissionsMiddleware("ADMIN"),
       testUserMiddleware,
       updateProductSchema,
       validateRequest,
     ],
-    updateProduct
+    updateProduct,
   )
   .delete(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('ADMIN'),
+      authorizePermissionsMiddleware("ADMIN"),
       testUserMiddleware,
       deleteProductSchema,
       validateRequest,
     ],
-    deleteProduct
+    deleteProduct,
   );
 
 module.exports = router;

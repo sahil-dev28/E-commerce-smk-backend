@@ -1,60 +1,63 @@
-const express = require('express');
+const express = require("express");
 
 const {
   createCoupon,
   getAllCoupons,
   updateCoupon,
   deleteCoupon,
-} = require('../controllers/couponController');
+  getAllValidCoupons,
+} = require("../controllers/couponController");
 const {
   authenticateUserMiddleware,
   authorizePermissionsMiddleware,
-} = require('../middleware/authentication');
+} = require("../middleware/authentication");
 const {
   createCouponSchema,
   updateCouponSchema,
   deleteCouponSchema,
-} = require('../validation/coupon');
-const { validateRequest } = require('../middleware/validate-request');
-const { testUserMiddleware } = require('../middleware/test-user');
+} = require("../validation/coupon");
+const { validateRequest } = require("../middleware/validate-request");
+const { testUserMiddleware } = require("../middleware/test-user");
 
 const router = express.Router();
 
 router
-  .route('/')
+  .route("/")
   .get(authenticateUserMiddleware, getAllCoupons)
   .post(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('ADMIN'),
+      authorizePermissionsMiddleware("ADMIN"),
       testUserMiddleware,
       createCouponSchema,
       validateRequest,
     ],
-    createCoupon
+    createCoupon,
   );
 
+router.route("/valid").get(authenticateUserMiddleware, getAllValidCoupons);
+
 router
-  .route('/:id')
+  .route("/:id")
   .patch(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('ADMIN'),
+      authorizePermissionsMiddleware("ADMIN"),
       testUserMiddleware,
       updateCouponSchema,
       validateRequest,
     ],
-    updateCoupon
+    updateCoupon,
   )
   .delete(
     [
       authenticateUserMiddleware,
-      authorizePermissionsMiddleware('ADMIN'),
+      authorizePermissionsMiddleware("ADMIN"),
       testUserMiddleware,
       deleteCouponSchema,
       validateRequest,
     ],
-    deleteCoupon
+    deleteCoupon,
   );
 
 module.exports = router;

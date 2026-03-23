@@ -1,30 +1,30 @@
-const { StatusCodes } = require('http-status-codes');
-const cloudinary = require('cloudinary').v2;
-const fs = require('fs').promises;
+const { StatusCodes } = require("http-status-codes");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs").promises;
 
-const prisma = require('../../prisma/prisma-client');
+const prisma = require("../../prisma/prisma-client");
 
-const CustomError = require('../errors');
-const customUtils = require('../utils');
-const retrieveSchema = require('../retrieveSchema');
-const modelMethods = require('../model-methods');
+const CustomError = require("../errors");
+const customUtils = require("../utils");
+const retrieveSchema = require("../retrieveSchema");
+const modelMethods = require("../model-methods");
 
 const createProduct = async (req, res) => {
   if (!req.files || !req.files.image) {
-    throw new CustomError.BadRequestError('Please provide product image');
+    throw new CustomError.BadRequestError("Please provide product image");
   }
   const { image } = req.files;
 
   try {
-    if (!image.mimetype.startsWith('image')) {
-      throw new CustomError.BadRequestError('Please upload an image');
+    if (!image.mimetype.startsWith("image")) {
+      throw new CustomError.BadRequestError("Please upload an image");
     }
 
     const maxSize = 1024 * 1024;
 
     if (image.size >= maxSize) {
       throw new CustomError.BadRequestError(
-        'Please upload an image smaller than 1 MB'
+        "Please upload an image smaller than 1 MB",
       );
     }
 
@@ -36,19 +36,19 @@ const createProduct = async (req, res) => {
 
     if (existingProduct) {
       throw new CustomError.ConflictError(
-        `Product ${req.body.name} already exists`
+        `Product ${req.body.name} already exists`,
       );
     }
 
     const result = await cloudinary.uploader.upload(image.tempFilePath, {
       use_filename: true,
-      folder: 'shoe-craze/product-images',
+      folder: "e_commerce_app/product-images",
     });
 
     await fs.unlink(image.tempFilePath);
 
     const { constructedProduct, constructedSize } = new modelMethods.Product(
-      req.body
+      req.body,
     ).constructProduct();
 
     await prisma.product.create({
@@ -82,7 +82,7 @@ const getAllProducts = async (req, res) => {
       ...queryObject.where,
       name: {
         startsWith: search,
-        mode: 'insensitive',
+        mode: "insensitive",
       },
     };
   }
@@ -112,51 +112,51 @@ const getAllProducts = async (req, res) => {
     };
   }
 
-  if (priceSort === 'highest') {
+  if (priceSort === "highest") {
     queryObject.orderBy.push({
-      price: 'desc',
+      price: "desc",
     });
   }
 
-  if (priceSort === 'lowest') {
+  if (priceSort === "lowest") {
     queryObject.orderBy.push({
-      price: 'asc',
+      price: "asc",
     });
   }
 
-  if (sort == 'highest-rated') {
+  if (sort == "highest-rated") {
     queryObject.orderBy.push({
-      averageRating: 'desc',
+      averageRating: "desc",
     });
   }
 
-  if (sort == 'latest') {
+  if (sort == "latest") {
     queryObject.orderBy.push({
-      createdAt: 'desc',
+      createdAt: "desc",
     });
   }
 
-  if (sort == 'oldest') {
+  if (sort == "oldest") {
     queryObject.orderBy.push({
-      createdAt: 'asc',
+      createdAt: "asc",
     });
   }
 
-  if (sort === 'a-z') {
+  if (sort === "a-z") {
     queryObject.orderBy.push({
-      name: 'asc',
+      name: "asc",
     });
   }
 
-  if (sort === 'z-a') {
+  if (sort === "z-a") {
     queryObject.orderBy.push({
-      name: 'desc',
+      name: "desc",
     });
   }
 
   if (!sort) {
     queryObject.orderBy.push({
-      createdAt: 'desc',
+      createdAt: "desc",
     });
   }
 
@@ -200,6 +200,57 @@ const getAllProducts = async (req, res) => {
   res.status(StatusCodes.OK).json({ products, totalProducts, numOfPages });
 };
 
+const getWishListedProducts = async (req, res) => {
+  const page = +req.query.page || 1;
+  const take = 8;
+  const skip = (page - 1) * take;
+
+  console.log("userId", req.user.userId);
+
+  let products = await prisma.product.findMany({
+    skip,
+    take,
+    where: {
+      wishListedBy: {
+        some: {
+          id: req.user.userId,
+        },
+      },
+    },
+    select: retrieveSchema.products,
+  });
+
+  products = products.map((product) => {
+    let mappedProduct = {
+      ...product,
+      isWishListed: true,
+      isAddedToCart: false,
+    };
+
+    product.cartBy.forEach((user) => {
+      if (user.id === req.user?.userId) {
+        mappedProduct.isAddedToCart = true;
+      }
+    });
+    delete mappedProduct.wishListedBy;
+    delete mappedProduct.cartBy;
+    return mappedProduct;
+  });
+
+  const totalProducts = await prisma.product.count({
+    where: {
+      wishListedBy: {
+        some: {
+          id: req.user.userId,
+        },
+      },
+    },
+  });
+  const numOfPages = Math.ceil(totalProducts / take);
+
+  res.status(StatusCodes.OK).json({ products, totalProducts, numOfPages });
+};
+
 const updateProduct = async (req, res) => {
   const {
     params: { id: productId },
@@ -217,30 +268,30 @@ const updateProduct = async (req, res) => {
 
     if (!product) {
       throw new CustomError.NotFoundError(
-        `No product found with id of ${productId}`
+        `No product found with id of ${productId}`,
       );
     }
 
     const { constructedProduct, constructedSize } = new modelMethods.Product(
-      body
+      body,
     ).constructProduct();
 
     if (image) {
-      if (!image.mimetype.startsWith('image')) {
-        throw new CustomError.BadRequestError('Please upload an image');
+      if (!image.mimetype.startsWith("image")) {
+        throw new CustomError.BadRequestError("Please upload an image");
       }
 
       const maxSize = 1024 * 1024;
 
       if (image.size >= maxSize) {
         throw new CustomError.BadRequestError(
-          'Please upload an image smaller than 1 MB'
+          "Please upload an image smaller than 1 MB",
         );
       }
 
       const result = await cloudinary.uploader.upload(image.tempFilePath, {
         use_filename: true,
-        folder: 'shoe-craze/product-images',
+        folder: "e_commerce_app/product-images",
       });
 
       await fs.unlink(image.tempFilePath);
@@ -293,7 +344,7 @@ const getSingleProduct = async (req, res) => {
 
   if (!product) {
     throw new CustomError.NotFoundError(
-      `No product found with id of ${productId}`
+      `No product found with id of ${productId}`,
     );
   }
 
@@ -325,7 +376,7 @@ const deleteProduct = async (req, res) => {
 
   if (!product) {
     throw new CustomError.NotFoundError(
-      `No product found with id of ${productId}`
+      `No product found with id of ${productId}`,
     );
   }
 
@@ -422,9 +473,60 @@ const removeProductFromCart = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
 
+const getCart = async (req, res) => {
+  const page = +req.query.page || 1;
+  const take = 8;
+  const skip = (page - 1) * take;
+
+  console.log("userId", req.user.userId);
+
+  let products = await prisma.product.findMany({
+    skip,
+    take,
+    where: {
+      cartBy: {
+        some: {
+          id: req.user.userId,
+        },
+      },
+    },
+    select: retrieveSchema.products,
+  });
+
+  products = products.map((product) => {
+    let mappedProduct = {
+      ...product,
+      isWishListed: false,
+      isAddedToCart: true,
+    };
+    product.wishListedBy.forEach((user) => {
+      if (user.id === req.user?.userId) {
+        mappedProduct.isWishListed = true;
+      }
+    });
+    delete mappedProduct.wishListedBy;
+    delete mappedProduct.cartBy;
+    return mappedProduct;
+  });
+
+  const totalProducts = await prisma.product.count({
+    where: {
+      cartBy: {
+        some: {
+          id: req.user.userId,
+        },
+      },
+    },
+  });
+  const numOfPages = Math.ceil(totalProducts / take);
+
+  res.status(StatusCodes.OK).json({ products, totalProducts, numOfPages });
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
+  getWishListedProducts,
   updateProduct,
   getSingleProduct,
   deleteProduct,
@@ -432,4 +534,5 @@ module.exports = {
   removeProductFromWishList,
   addProductToCart,
   removeProductFromCart,
+  getCart,
 };

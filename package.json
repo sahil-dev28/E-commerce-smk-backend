@@ -5,13 +5,12 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "node --watch src/app.js"
   },
   "author": "Abhishek Kolge",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.8.6",
-    "nodemon": "^3.1.14",
     "prisma": "^5.4.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"

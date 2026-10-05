@@ -6,21 +6,46 @@ const CustomError = require("../errors");
 const customUtils = require("../utils");
 const modelMethods = require("../model-methods");
 
-const register = async (req, res) => {
-  delete req.body.role;
+const createOrRefreshUser = async (req, role) => {
   const verificationToken = customUtils.createRandomBytes();
-  console.log({ verificationToken });
+  const hashedToken = customUtils.hashString(verificationToken);
 
-  const userModel = new modelMethods.User({
-    ...req.body,
-    verificationToken: customUtils.hashString(verificationToken),
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      email: req.body.email,
+    },
   });
 
-  await userModel.encryptPassword();
+  let user;
 
-  const user = await prisma.user.create({
-    data: userModel.model,
-  });
+  if (existingUser) {
+    if (existingUser.isVerified || existingUser.role !== role) {
+      throw new CustomError.ConflictError("Provided email already exists");
+    }
+
+    // Unverified account: issue a fresh verification link instead of
+    // failing, so users who never received the first email are not stuck.
+    user = await prisma.user.update({
+      data: {
+        verificationToken: hashedToken,
+      },
+      where: {
+        email: existingUser.email,
+      },
+    });
+  } else {
+    const userModel = new modelMethods.User({
+      ...req.body,
+      role,
+      verificationToken: hashedToken,
+    });
+
+    await userModel.encryptPassword();
+
+    user = await prisma.user.create({
+      data: userModel.model,
+    });
+  }
 
   await customUtils.sendVerificationEmail({
     name: user.firstName,
@@ -28,6 +53,12 @@ const register = async (req, res) => {
     verificationToken,
     origin: req.header("Origin"),
   });
+
+  return user;
+};
+
+const register = async (req, res) => {
+  const user = await createOrRefreshUser(req, "BASIC");
 
   res.status(StatusCodes.CREATED).json({
     msg: `Email verification link sent to ${user.email}`,
@@ -35,27 +66,7 @@ const register = async (req, res) => {
 };
 
 const adminRegister = async (req, res) => {
-  req.body.role = "ADMIN";
-  const verificationToken = customUtils.createRandomBytes();
-  console.log({ verificationToken });
-
-  const userModel = new modelMethods.User({
-    ...req.body,
-    verificationToken: customUtils.hashString(verificationToken),
-  });
-
-  await userModel.encryptPassword();
-
-  const user = await prisma.user.create({
-    data: userModel.model,
-  });
-
-  await customUtils.sendVerificationEmail({
-    name: user.firstName,
-    email: user.email,
-    verificationToken,
-    origin: req.header("Origin"),
-  });
+  const user = await createOrRefreshUser(req, "ADMIN");
 
   res.status(StatusCodes.CREATED).json({
     msg: `Email verification link sent to ${user.email}`,
